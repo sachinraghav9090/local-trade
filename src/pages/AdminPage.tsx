@@ -973,19 +973,20 @@ export default function AdminPage() {
                                         </Button>
                                       </>
                                     )}
-                                    <Button
-                                      variant="destructive"
-                                      size="icon"
-                                      className="bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 shadow-none border-0"
-                                      onClick={() =>
-                                        handleDeleteListing(listing.id)
-                                      }
-                                  >
-                                    <Trash2 className="w-4 h-4" />
-                                  </Button>
-                                </TableCell>
-                              </TableRow>
-                            ))}
+<Button
+                                          variant="destructive"
+                                          size="icon"
+                                          className="bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 shadow-none border-0"
+                                          onClick={() =>
+                                            handleDeleteListing(listing.id)
+                                          }
+                                        >
+                                          <Trash2 className="w-4 h-4" />
+                                        </Button>
+                                      </div>
+                                    </TableCell>
+                                  </TableRow>
+                                ))}
                           </TableBody>
                         </Table>
                       </div>
