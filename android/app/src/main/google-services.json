@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "67732497073",
+    "project_id": "localtrade-56d47",
+    "storage_bucket": "localtrade-56d47.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:67732497073:android:3a9d59070da6d0c4c1b890",
+        "android_client_info": {
+          "package_name": "com.local.trade"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "67732497073-do866fmijppc9k8t4dhojvfnmj8jfnrh.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.local.trade",
+            "certificate_hash": "e8dd5c3057fcfd30c678023630910b16a5909875"
+          }
+        },
+        {
+          "client_id": "67732497073-57j9r5l2r5flqr1b1rvhpp07m0elq17i.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAG5glI_dVACpwPbAZURvhpU-pcRVW-ZDs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "67732497073-57j9r5l2r5flqr1b1rvhpp07m0elq17i.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

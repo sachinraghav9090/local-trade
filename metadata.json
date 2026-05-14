@@ -1,0 +1,10 @@
+{
+  "name": "Local Trade",
+  "description": "A full-featured marketplace app for buying and selling items, featuring real-time chat, listings, and user authentication.",
+  "requestFramePermissions": [
+    "geolocation",
+    "microphone",
+    "camera"
+  ],
+  "majorCapabilities": []
+}

@@ -1,0 +1,263 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // ===============================================================
+    // Assumed Data Model
+    // ===============================================================
+    // Collection: users
+    // Document ID: {uid}
+    // Fields:
+    //   - uid: string (required)
+    //   - displayName: string (required)
+    //   - email: string (required)
+    //   - photoURL: string (optional)
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: listings
+    // Document ID: {listingId}
+    // Fields:
+    //   - title: string (required)
+    //   - description: string (optional)
+    //   - price: number (required)
+    //   - category: string (optional)
+    //   - location: string (optional)
+    //   - images: list of strings (optional)
+    //   - sellerId: string (required)
+    //   - sellerName: string (required)
+    //   - sellerPhoto: string (optional)
+    //   - status: string (required, 'active' or 'sold')
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: chats
+    // Document ID: {chatId}
+    // Fields:
+    //   - listingId: string (required)
+    //   - listingTitle: string (required)
+    //   - participants: list of strings (required, exactly 2)
+    //   - lastMessage: string (optional)
+    //   - lastMessageAt: timestamp (optional)
+    //
+    // Collection: chats/{chatId}/messages
+    // Document ID: {messageId}
+    // Fields:
+    //   - chatId: string (required)
+    //   - senderId: string (required)
+    //   - text: string (required)
+    //   - createdAt: timestamp (required)
+    //
+    // Collection: categories
+    // Document ID: {categoryId}
+    // Fields:
+    //   - name: string (required)
+    //
+    // Collection: reports
+    // Document ID: {reportId}
+    // Fields:
+    //   - listingId: string (required)
+    //   - listingTitle: string (required)
+    //   - reporterId: string (required)
+    //   - reporterEmail: string (required)
+    //   - reason: string (required)
+    //   - status: string (required, 'pending' or 'resolved')
+    //   - createdAt: timestamp (required)
+    // ===============================================================
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        ((exists(/databases/$(database)/documents/users/$(request.auth.uid)) && 
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.get('role', 'user') == 'admin') ||
+          request.auth.token.email in ["sachinraghav9090@gmail.com", "sachinraghav2525@gmail.com"]);
+    }
+
+    function isChatParticipant(chatId) {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/chats/$(chatId)) &&
+             request.auth.uid in get(/databases/$(database)/documents/chats/$(chatId)).data.participants;
+    }
+
+    function isCallParticipant(callId) {
+      return isAuthenticated() && 
+             exists(/databases/$(database)/documents/calls/$(callId)) &&
+             request.auth.uid in get(/databases/$(database)/documents/calls/$(callId)).data.participants;
+    }
+
+    function isValidEmail(email) {
+      return email is string && email.matches("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
+    }
+    
+    function isValidCall(data) {
+      return data.keys().hasAll(['chatId', 'callerId', 'callerName', 'receiverId', 'receiverName', 'status', 'participants', 'createdAt']) &&
+             data.callerId == request.auth.uid &&
+             data.participants is list &&
+             request.auth.uid in data.participants &&
+             data.status == 'ringing';
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'displayName', 'email', 'createdAt']) &&
+             (data.uid == request.auth.uid || isAdmin()) &&
+             data.displayName is string && data.displayName.size() > 0 && data.displayName.size() < 100 &&
+             isValidEmail(data.email) &&
+             (!('mobile' in data) || data.mobile == "" || (data.mobile is string && data.mobile.size() >= 10 && data.mobile.size() <= 15)) &&
+             (!('role' in data) || data.role in ['admin', 'user', 'buyer', 'seller']) &&
+             (!('referralCode' in data) || (data.referralCode is string && data.referralCode.size() <= 50)) &&
+             (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 1048576)) &&
+             (!('dob' in data) || (data.dob is string)) &&
+             (!('bio' in data) || (data.bio is string && data.bio.size() <= 1000)) &&
+             (!('address' in data) || (data.address is string && data.address.size() <= 500)) &&
+             (!('referredBy' in data) || (data.referredBy is string && data.referredBy.size() <= 50)) &&
+             (!('isBanned' in data) || data.isBanned is bool) &&
+             (!('lastPhotoUpdate' in data) || data.lastPhotoUpdate is timestamp) &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidListing(data) {
+      return data.keys().hasAll(['title', 'price', 'sellerId', 'sellerName', 'status', 'createdAt']) &&
+             data.title is string && data.title.size() > 0 && data.title.size() < 200 &&
+             data.price is number && data.price >= 0 &&
+             data.sellerId == request.auth.uid &&
+             data.status in ['active', 'sold'] &&
+             data.createdAt is timestamp;
+    }
+
+    function isValidChat(data) {
+      return data.keys().hasAll(['listingId', 'listingTitle', 'participants']) &&
+             data.participants is list && data.participants.size() >= 2 &&
+             request.auth.uid in data.participants;
+    }
+
+    function isValidMessage(data) {
+      return data.keys().hasAll(['chatId', 'senderId', 'createdAt']) &&
+             data.createdAt is timestamp &&
+             (!('text' in data) || (data.text is string && data.text.size() <= 5000)) &&
+             (!('type' in data) || data.type is string) &&
+             (!('fileUrl' in data) || (data.fileUrl is string && data.fileUrl.size() <= 10485760)) &&
+             (!('duration' in data) || data.duration is number) &&
+             (!('callStatus' in data) || data.callStatus is string) &&
+             (!('updatedAt' in data) || data.updatedAt is timestamp) &&
+             (!('offerDetails' in data) || (
+               data.offerDetails is map &&
+               data.offerDetails.price is number &&
+               data.offerDetails.status in ['pending', 'accepted', 'rejected']
+             )) &&
+             (!('location' in data) || (
+               data.location is map &&
+               data.location.latitude is number &&
+               data.location.longitude is number &&
+               (!('isLive' in data.location) || data.location.isLive is bool) &&
+               (!('expiresAt' in data.location) || data.location.expiresAt is timestamp)
+             ));
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    // Rules for app connection testing
+    match /_connection_test_/{docId} {
+      allow read: if true;
+    }
+
+    match /users/{userId} {
+      allow read: if isAuthenticated();
+      allow create: if (isOwner(userId) && isValidUser(request.resource.data) && (!('role' in request.resource.data) || request.resource.data.role == 'user' || isAdmin())) || isAdmin();
+      allow update: if (isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.createdAt == resource.data.createdAt && (!('role' in request.resource.data) || request.resource.data.role == resource.data.role)) || (isAdmin() && isValidUser(request.resource.data));
+      allow delete: if isAdmin();
+
+      match /favorites/{listingId} {
+        allow read: if isOwner(userId);
+        allow write: if isOwner(userId);
+      }
+    }
+
+    match /listings/{listingId} {
+      allow read: if true; // Publicly readable
+      allow create: if isAuthenticated() && isValidListing(request.resource.data);
+      allow update: if (isAuthenticated() && resource.data.sellerId == request.auth.uid && 
+                      isValidListing(request.resource.data) &&
+                      request.resource.data.createdAt == resource.data.createdAt &&
+                      request.resource.data.sellerId == resource.data.sellerId) || isAdmin();
+      allow delete: if (isAuthenticated() && resource.data.sellerId == request.auth.uid) || isAdmin();
+    }
+
+    match /chats/{chatId} {
+      allow get: if isAuthenticated() && (request.auth.uid in resource.data.participants || isAdmin());
+      allow list: if isAuthenticated() && (request.auth.uid in resource.data.participants || isAdmin());
+      allow create: if isAuthenticated() && isValidChat(request.resource.data);
+      allow update: if isAuthenticated() && ((request.auth.uid in resource.data.participants &&
+                      request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastMessage', 'lastMessageAt'])) || isAdmin());
+      allow delete: if isAuthenticated() && (request.auth.uid in resource.data.participants || isAdmin());
+
+      match /messages/{messageId} {
+        allow read: if isAdmin() || isChatParticipant(chatId);
+        allow create: if (isAdmin() || isChatParticipant(chatId)) && 
+                      isValidMessage(request.resource.data) &&
+                      request.resource.data.senderId == request.auth.uid;
+        allow update: if (isAdmin() || isChatParticipant(chatId)) && 
+                      isValidMessage(request.resource.data) &&
+                      request.resource.data.senderId == resource.data.senderId &&
+                      request.resource.data.chatId == resource.data.chatId &&
+                      (
+                        (request.auth.uid == resource.data.senderId && 
+                         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['location', 'updatedAt', 'text'])) ||
+                        (request.auth.uid != resource.data.senderId && 
+                         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['offerDetails', 'updatedAt']))
+                      );
+        allow delete: if isAdmin() || (isChatParticipant(chatId) && resource.data.senderId == request.auth.uid);
+      }
+    }
+
+    match /settings/{settingId} {
+      allow read: if settingId == 'global' || isAdmin();
+      allow write: if isAdmin();
+    }
+
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /reports/{reportId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAdmin();
+    }
+
+    match /support/{ticketId} {
+      allow read: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated();
+      allow update, delete: if isAdmin();
+    }
+
+    match /rules/{ruleId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /calls/{callId} {
+      allow get: if isAuthenticated() && (request.auth.uid in resource.data.participants || isAdmin());
+      allow list: if isAuthenticated() && (resource.data.receiverId == request.auth.uid || resource.data.callerId == request.auth.uid || request.auth.uid in resource.data.participants || isAdmin());
+      allow create: if isAuthenticated() && isValidCall(request.resource.data);
+      allow update: if isAuthenticated() && (request.auth.uid in resource.data.participants || isAdmin());
+      allow delete: if isAdmin() || (isAuthenticated() && request.auth.uid in resource.data.participants);
+
+      match /callerCandidates/{candidateId} {
+        allow read, write: if isCallParticipant(callId) || isAdmin();
+      }
+      match /receiverCandidates/{candidateId} {
+        allow read, write: if isCallParticipant(callId) || isAdmin();
+      }
+    }
+  }
+}
