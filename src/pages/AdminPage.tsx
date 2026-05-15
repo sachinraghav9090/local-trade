@@ -88,6 +88,7 @@ export default function AdminPage() {
   const [editingRuleId, setEditingRuleId] = useState<string | null>(null);
   const [showRuleDialog, setShowRuleDialog] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [isPasswordVerified, setIsPasswordVerified] = useState(false);
   const [passwordInput, setPasswordInput] = useState("");
@@ -104,28 +105,30 @@ export default function AdminPage() {
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
-    const checkAdmin = async () => {
-      const user = auth.currentUser;
-      if (!user) {
-        setIsAdmin(false);
-        return;
-      }
-
-      // Check if user is admin via email or role
-      if (user.email === "sachinraghav9090@gmail.com") {
-        setIsAdmin(true);
-      } else {
-        const userDoc = await getDoc(doc(db, "users", user.uid));
-        if (userDoc.exists() && userDoc.data().role === "admin") {
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        if (user.email === "sachinraghav9090@gmail.com") {
           setIsAdmin(true);
+        } else {
+          const userDoc = await getDoc(doc(db, "users", user.uid));
+          if (userDoc.exists() && userDoc.data().role === "admin") {
+            setIsAdmin(true);
+          }
         }
       }
-    };
+      setAuthLoading(false);
+    });
 
-    checkAdmin();
-    // Always require password verification on every visit
-    setIsPasswordVerified(false);
+    return () => unsubscribe();
   }, []);
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   const handleVerifyPin = () => {
     if (passwordInput === "123@Sachin#*") {
