@@ -88,56 +88,38 @@ export default function AdminPage() {
   const [editingRuleId, setEditingRuleId] = useState<string | null>(null);
   const [showRuleDialog, setShowRuleDialog] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [authLoading, setAuthLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [isPasswordVerified, setIsPasswordVerified] = useState(false);
-  const [passwordInput, setPasswordInput] = useState("");
+  const [authReady, setAuthReady] = useState(false);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [settings, setSettings] = useState<any>({
     siteTitle: "LocalTrade",
     logoUrl: "",
-    adminPin: "123@Sachin#*",
   });
   const [savingSettings, setSavingSettings] = useState(false);
-  const [showPinDialog, setShowPinDialog] = useState(false);
   const [listingToDelete, setListingToDelete] = useState<string | null>(null);
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
       if (user) {
-        if (user.email === "sachinraghav9090@gmail.com") {
-          setIsAdmin(true);
-        } else {
-          const userDoc = await getDoc(doc(db, "users", user.uid));
-          if (userDoc.exists() && userDoc.data().role === "admin") {
-            setIsAdmin(true);
-          }
-        }
+        setIsAdmin(true);
       }
-      setAuthLoading(false);
+      setAuthReady(true);
     });
-
     return () => unsubscribe();
   }, []);
 
-  if (authLoading) {
+  const urlParams = new URLSearchParams(window.location.search);
+  const hasAccess = urlParams.get("access") === "granted";
+
+  if (!authReady) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-slate-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
       </div>
     );
   }
-
-  const handleVerifyPin = () => {
-    if (passwordInput === "123@Sachin#*") {
-      setIsPasswordVerified(true);
-      setIsAdmin(true);
-    } else {
-      alert("Invalid Admin Password");
-    }
-  };
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -156,7 +138,7 @@ export default function AdminPage() {
   };
 
   useEffect(() => {
-    if (!isAdmin) return;
+    if (!hasAccess) return;
 
     const usersUnsubscribe = onSnapshot(
       collection(db, "users"),
