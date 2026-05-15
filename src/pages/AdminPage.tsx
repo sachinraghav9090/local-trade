@@ -500,72 +500,7 @@ export default function AdminPage() {
     );
   }
 
-  if (
-    settings.adminPin &&
-    !isPasswordVerified &&
-    auth.currentUser?.email !== "sachinraghav9090@gmail.com"
-  ) {
-    return (
-      <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-md z-[100] flex items-center justify-center p-4">
-        <motion.div
-          initial={{ scale: 0.9, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md border border-slate-200"
-        >
-          <div className="flex flex-col items-center mb-8">
-            <div className="p-3 bg-blue-100 rounded-2xl mb-4">
-              <Shield className="w-8 h-8 text-blue-600" />
-            </div>
-            <h1 className="text-2xl font-bold text-slate-900">Admin Console</h1>
-            <p className="text-slate-500 text-sm">
-              Please verify your administrator identity
-            </p>
-          </div>
-
-          <div className="space-y-6">
-            <div className="space-y-2">
-              <Label className="text-sm font-semibold text-slate-700">
-                Administrator ID
-              </Label>
-              <Input
-                value={auth.currentUser?.email || ""}
-                disabled
-                className="bg-slate-50 border-slate-200 text-slate-600 grayscale"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-sm font-semibold text-slate-700">
-                Security Password
-              </Label>
-              <Input
-                type="password"
-                placeholder="Enter password..."
-                value={passwordInput}
-                onChange={(e) => setPasswordInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleVerifyPin()}
-                className="bg-white border-slate-200 focus-visible:ring-blue-500"
-              />
-            </div>
-
-            <Button
-              onClick={handleVerifyPin}
-              className="w-full bg-blue-600 hover:bg-blue-700 h-12 text-lg font-semibold rounded-xl transition-all shadow-lg active:scale-[0.98]"
-            >
-              Verify & Enter
-            </Button>
-
-            <button
-              onClick={() => navigate("/")}
-              className="w-full text-sm text-slate-400 hover:text-slate-600 transition-colors py-2"
-            >
-              Cancel and Return Home
-            </button>
-          </div>
-        </motion.div>
-      </div>
-    );
-  }
+  // Skip PIN verification since we're already authenticated via Firebase
 
   return (
     <div className="flex flex-col md:flex-row h-screen bg-slate-50 w-full absolute inset-0 z-50 overflow-hidden">
