@@ -89,7 +89,6 @@ export default function AdminPage() {
   const [showRuleDialog, setShowRuleDialog] = useState(false);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [authReady, setAuthReady] = useState(false);
   const [activeTab, setActiveTab] = useState("dashboard");
   const [settings, setSettings] = useState<any>({
     siteTitle: "LocalTrade",
@@ -100,26 +99,8 @@ export default function AdminPage() {
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
   const [isProcessing, setIsProcessing] = useState(false);
 
-  useEffect(() => {
-    const unsubscribe = auth.onAuthStateChanged((user) => {
-      if (user) {
-        setIsAdmin(true);
-      }
-      setAuthReady(true);
-    });
-    return () => unsubscribe();
-  }, []);
-
   const urlParams = new URLSearchParams(window.location.search);
   const hasAccess = urlParams.get("access") === "granted";
-
-  if (!authReady) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-900">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
 
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
