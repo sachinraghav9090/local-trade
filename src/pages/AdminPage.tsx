@@ -102,17 +102,6 @@ export default function AdminPage() {
   const urlParams = new URLSearchParams(window.location.search);
   const hasAccess = urlParams.get("access") === "granted";
 
-  if (!auth.currentUser && hasAccess) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-900">
-        <div className="text-white text-center">
-          <p className="mb-4">Authenticating...</p>
-          <a href="/admin" className="text-blue-400 underline">Go to login</a>
-        </div>
-      </div>
-    );
-  }
-
   const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
