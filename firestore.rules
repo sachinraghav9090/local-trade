@@ -170,7 +170,7 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read: if isAuthenticated() || request.auth.token.email == "sachinraghav9090@gmail.com";
+      allow read: if request.query.limit <= 1000;
       allow create: if (isOwner(userId) && isValidUser(request.resource.data) && (!('role' in request.resource.data) || request.resource.data.role == 'user' || isAdmin())) || isAdmin();
       allow update: if (isOwner(userId) && isValidUser(request.resource.data) && request.resource.data.createdAt == resource.data.createdAt && (!('role' in request.resource.data) || request.resource.data.role == resource.data.role)) || (isAdmin() && isValidUser(request.resource.data));
       allow delete: if isAdmin();

@@ -11,8 +11,6 @@ import {
 } from "@/components/ui/card";
 import { Shield, Lock, ArrowLeft, Mail } from "lucide-react";
 import { motion } from "motion/react";
-import { auth } from "../firebase";
-import { signInWithEmailAndPassword } from "firebase/auth";
 
 const ADMIN_EMAIL = "sachinraghav9090@gmail.com";
 const ADMIN_PASSWORD = "123@Sachin#*";
@@ -24,7 +22,7 @@ export default function AdminLoginPage() {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  const handleAdminLogin = async (e: React.FormEvent) => {
+  const handleAdminLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
@@ -35,18 +33,7 @@ export default function AdminLoginPage() {
       return;
     }
 
-    try {
-      await signInWithEmailAndPassword(auth, ADMIN_EMAIL, ADMIN_PASSWORD);
-      navigate("/admin-panel?access=granted");
-    } catch (err: any) {
-      if (err.code === "auth/user-not-found") {
-        navigate("/admin-panel?access=granted");
-      } else if (err.code === "auth/invalid-credential" || err.code === "auth/wrong-password") {
-        navigate("/admin-panel?access=granted");
-      } else {
-        navigate("/admin-panel?access=granted");
-      }
-    }
+    navigate("/admin-panel?access=granted");
   };
 
   return (
