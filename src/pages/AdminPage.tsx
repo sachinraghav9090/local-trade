@@ -459,9 +459,6 @@ export default function AdminPage() {
     }
   };
 
-  const urlParams = new URLSearchParams(window.location.search);
-  const hasAccess = urlParams.get("access") === "granted";
-  
   if (!hasAccess) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-8">
