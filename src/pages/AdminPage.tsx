@@ -106,7 +106,10 @@ export default function AdminPage() {
   useEffect(() => {
     const checkAdmin = async () => {
       const user = auth.currentUser;
-      if (!user) return;
+      if (!user) {
+        setIsAdmin(false);
+        return;
+      }
 
       // Check if user is admin via email or role
       if (user.email === "sachinraghav9090@gmail.com") {
@@ -120,7 +123,7 @@ export default function AdminPage() {
     };
 
     checkAdmin();
-    // Always require password on every visit - remove session storage check
+    // Always require password verification on every visit
     setIsPasswordVerified(false);
   }, []);
 
