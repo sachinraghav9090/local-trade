@@ -350,8 +350,8 @@ function AppContent() {
   }
 
   const isAdminRoute =
-    location.pathname.startsWith("/admin") &&
-    !location.pathname.startsWith("/admin-login");
+    location.pathname === "/admin" ||
+    location.pathname === "/admin-panel";
   const isAdminLoginRoute = location.pathname.startsWith("/admin-login");
   const isChatRoom = location.pathname.startsWith("/chat/");
 
@@ -362,20 +362,12 @@ function AppContent() {
     location.pathname.startsWith("/chats") ||
     isChatRoom;
 
-  if (isAdminLoginRoute) {
-    return (
-      <Routes>
-        <Route path="/admin-login" element={<AdminLoginPage />} />
-      </Routes>
-    );
+  if (location.pathname === "/admin") {
+    return <AdminLoginPage />;
   }
 
-  if (isAdminRoute) {
-    return (
-      <Routes>
-        <Route path="/admin" element={<AdminPage />} />
-      </Routes>
-    );
+  if (location.pathname === "/admin-panel") {
+    return <AdminPage />;
   }
 
   if (isProtectedRoute && !user) {

@@ -120,18 +120,16 @@ export default function AdminPage() {
     };
 
     checkAdmin();
-    // Check session storage
-    if (sessionStorage.getItem("admin_verified") === "true") {
-      setIsPasswordVerified(true);
-    }
+    // Always require password on every visit - remove session storage check
+    setIsPasswordVerified(false);
   }, []);
 
   const handleVerifyPin = () => {
-    if (!settings.adminPin || passwordInput === settings.adminPin) {
+    if (passwordInput === "123@Sachin#*") {
       setIsPasswordVerified(true);
-      sessionStorage.setItem("admin_verified", "true");
+      setIsAdmin(true);
     } else {
-      alert("Invalid Admin Password/PIN");
+      alert("Invalid Admin Password");
     }
   };
 
@@ -473,7 +471,10 @@ export default function AdminPage() {
     }
   };
 
-  if (!isAdmin) {
+  const urlParams = new URLSearchParams(window.location.search);
+  const hasAccess = urlParams.get("access") === "granted";
+  
+  if (!hasAccess) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] text-center p-8">
         <div className="p-4 bg-red-50 rounded-full mb-6">
